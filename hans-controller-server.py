@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+import signal
 from flask import Flask, request, redirect, url_for
 from werkzeug.utils import secure_filename
 import argparse
 import sys
 from datetime import timedelta
 from flask_cors import CORS
+import rospy
+from supervisor.srv import *
 
 app = Flask(__name__)
 CORS(app)
@@ -35,6 +38,13 @@ def semanticmap_service():
         
         # here it goes all the logic for calling the behaviour
         print "Received rule %s" % rule_to_execute
+
+        rospy.wait_for_service('/execute_behavior')
+        try:
+            send_rule = rospy.ServiceProxy('/execute_behavior', SendRule)
+            send_rule(rule_to_execute)
+        except rospy.ServiceException, e:
+            print "Service call failed: %s" % e
         
         # you can do this in a single line with a dict {rule:behaviour}
         # a little bit of reflection, which in python is for free
